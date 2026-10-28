@@ -434,7 +434,6 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 .fim::before{content:"";position:absolute;left:50%;top:0;width:1440px;height:960px;margin-left:-720px;background:radial-gradient(closest-side,var(--brand-a24),transparent);pointer-events:none}
 .fim .st{margin-top:24px;color:var(--muted)}
 .fim .btns{margin-top:56px}
-.fim .url{margin-top:16px;font:500 14px/20px var(--f-ui);color:var(--subtle)}
 .ptn{display:flex;justify-content:center;align-items:center;gap:40px;margin-top:128px}
 .ptn .lbl{color:var(--subtle)}
 .ptn img{height:28px;width:auto}
@@ -943,7 +942,6 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
     <div class="btns rv">
       <a class="btn btn-p btn-xl" href="https://robertaestrela.github.io/krew-games/" data-b-href="url" target="_blank" rel="noopener"><span class="lg"><img class="onlight" src="assets/logos/krew.svg" alt="" data-b-src="logo"></span>Ver o seu produto na prática<span class="ic"><svg><use href="#i-arrow"/></svg></span></a>
     </div>
-    <p class="url rv" data-b="host">robertaestrela.github.io/krew-games</p>
     <div class="ptn rv">
       <span class="lbl">Parceiros Sirius</span>
       <span class="kp"><img src="assets/logos/estrelagames.svg" alt="">EstrelaGames</span>
@@ -977,10 +975,7 @@ const BRAND = {
   char: 'assets/chars/krew-nobru.webp',
   charName: 'Nobru'
 };
-document.querySelectorAll('[data-b]').forEach(el => {
-  const k = el.dataset.b;
-  el.textContent = k === 'host' ? BRAND.url.replace(/^https?:\/\//, '').replace(/\/$/, '') : BRAND[k];
-});
+document.querySelectorAll('[data-b]').forEach(el => el.textContent = BRAND[el.dataset.b]);
 document.querySelectorAll('[data-b-href]').forEach(el => el.href = BRAND[el.dataset.bHref]);
 document.querySelectorAll('[data-b-src]').forEach(el => el.src = BRAND[el.dataset.bSrc]);
 
@@ -1042,14 +1037,12 @@ $$('.ri').forEach((el, i) => el.style.setProperty('--d', (i * .08) + 's'));
 const games = $('#games');
 [...games.children].forEach(g => games.appendChild(g.cloneNode(true)));
 const gcards = [...games.children];
-let gx = 0, gLast = 0, gOn = true, gHover = false;
-games.addEventListener('mouseenter', () => gHover = true);
-games.addEventListener('mouseleave', () => gHover = false);
+let gx = 0, gLast = 0, gOn = true;
 new IntersectionObserver(es => gOn = es[0].isIntersecting).observe(games);
 function gamesFrame(t) {
   const dt = Math.min(64, t - (gLast || t)); gLast = t;
   if (gOn) {
-    if (!RM) gx += dt * (gHover ? .012 : .06);   // px por ms
+    if (!RM) gx += dt * .14;   // px por ms, sem parar
     const vw = games.clientWidth, sp = vw < 640 ? 208 : 248, tot = gcards.length * sp;
     const R = vw < 1024 ? 1e6 : Math.max(vw, 1280) * .95;
     gcards.forEach((c, i) => {
@@ -1062,7 +1055,7 @@ function gamesFrame(t) {
 }
 requestAnimationFrame(gamesFrame);
 
-/* ===== Telas: leque com uma no meio; rolam sozinhas para o lado, uma por vez (pausa com o mouse em cima) ===== */
+/* ===== Telas: leque com uma no meio; rolam sozinhas para o lado, sem parar ===== */
 const track = $('#track'), phones = $$('.tph');
 let PW = 276, PH = 600;
 function sizePhones() {
@@ -1070,7 +1063,6 @@ function sizePhones() {
   PW = Math.round(PH * 375 / 812);
   track.style.setProperty('--ph', PH + 'px'); track.style.setProperty('--pw', PW + 'px');
 }
-const smooth = t => t * t * (3 - 2 * t);
 function layoutPhones(shift) {
   const vw = track.clientWidth, n = phones.length, gap = Math.min(PW * 1.04, vw * .27);
   phones.forEach((ph, i) => {
@@ -1083,17 +1075,14 @@ function layoutPhones(shift) {
     ph.classList.toggle('on', a < .5);
   });
 }
-const STEP = 2600, MOVE = 900;   // a cada 2,6 s a próxima tela chega ao meio em 0,9 s
-let pT = 0, pLast = 0, pOn = true, pHover = false;
-track.addEventListener('mouseenter', () => pHover = true);
-track.addEventListener('mouseleave', () => pHover = false);
+const STEP = 1400;   // uma tela a cada 1,4 s, em movimento contínuo
+let pT = 0, pLast = 0, pOn = true;
 new IntersectionObserver(es => pOn = es[0].isIntersecting).observe(track);
 function phonesTick(t) {
   const dt = Math.min(64, t - (pLast || t)); pLast = t;
   if (pOn) {
-    if (!RM && !pHover && !html.classList.contains('all')) pT += dt;
-    const k = pT / STEP, f = k - Math.floor(k);
-    layoutPhones(Math.floor(k) + (f < MOVE / STEP ? smooth(f / (MOVE / STEP)) : 1));
+    if (!RM && !html.classList.contains('all')) pT += dt;
+    layoutPhones(pT / STEP);
   }
   requestAnimationFrame(phonesTick);
 }
