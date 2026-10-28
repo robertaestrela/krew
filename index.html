@@ -1055,7 +1055,7 @@ function gamesFrame(t) {
 }
 requestAnimationFrame(gamesFrame);
 
-/* ===== Telas: leque com uma no meio; rolam sozinhas para o lado, sem parar ===== */
+/* ===== Telas: leque com uma no meio; rolam sozinhas para o lado e a do meio chega com um quique ===== */
 const track = $('#track'), phones = $$('.tph');
 let PW = 276, PH = 600;
 function sizePhones() {
@@ -1075,14 +1075,16 @@ function layoutPhones(shift) {
     ph.classList.toggle('on', a < .5);
   });
 }
-const STEP = 1400;   // uma tela a cada 1,4 s, em movimento contínuo
+const STEP = 1700, MOVE = 900;   // a cada 1,7 s a próxima tela chega ao meio em 0,9 s
+const bounce = t => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2;   // passa ~10% do meio e volta
 let pT = 0, pLast = 0, pOn = true;
 new IntersectionObserver(es => pOn = es[0].isIntersecting).observe(track);
 function phonesTick(t) {
   const dt = Math.min(64, t - (pLast || t)); pLast = t;
   if (pOn) {
     if (!RM && !html.classList.contains('all')) pT += dt;
-    layoutPhones(pT / STEP);
+    const k = pT / STEP, f = k - Math.floor(k);
+    layoutPhones(Math.floor(k) + (f < MOVE / STEP ? bounce(f / (MOVE / STEP)) : 1));
   }
   requestAnimationFrame(phonesTick);
 }
